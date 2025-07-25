@@ -1,0 +1,202 @@
+/* static/style.css */
+
+/* --- "The Monospace Web" Style Color Variables --- */
+:root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --border-color: #000000;
+    --top-border: #f0e68c; /* A subtle color for the top border, as in the example */
+    --link-decoration: underline;
+}
+
+/* --- Basic Reset and Body Style --- */
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Fira Code', 'Andale Mono', 'Courier New', monospace;
+    margin: 0;
+    line-height: 1.6;
+    border-top: 5px solid var(--top-border);
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* --- Header Structure --- */
+header {
+    padding-bottom: 20px;
+}
+
+.header-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    border: 1px solid var(--border-color);
+}
+
+.header-title {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border-color);
+}
+
+.header-title h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.header-title p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.header-meta {
+    padding: 1.5rem;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+}
+.meta-item strong {
+    padding-right: 1em;
+}
+
+.meta-item .status-connected { color: #008000; /* Green */ }
+.meta-item .status-disconnected { color: #d90429; /* Red */ }
+
+
+/* --- Main "Cards" Containers --- */
+.card {
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+h2 {
+    color: var(--foreground);
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* --- Forms and Buttons --- */
+.search-card form {
+    display: flex;
+    width: 100%;
+}
+input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    background-color: var(--background);
+    border: 1px solid var(--border-color);
+    color: var(--foreground);
+    font-family: inherit;
+    font-size: 1rem;
+    margin-right: -1px; /* Border overlap */
+}
+input[type="text"]:focus {
+    outline: 2px solid var(--foreground);
+    z-index: 1;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: var(--background);
+    color: var(--foreground);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+}
+button:hover {
+    background-color: var(--foreground);
+    color: var(--background);
+}
+
+/* --- Tables --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    vertical-align: top;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+th {
+    font-weight: bold;
+}
+
+/* Allow long hashes to wrap */
+td.breakable, .details-table td:nth-child(2) {
+    white-space: normal;
+    word-break: break-all;
+}
+
+a {
+    color: var(--foreground);
+    text-decoration: var(--link-decoration);
+    font-weight: bold;
+}
+a:hover {
+    background-color: var(--foreground);
+    color: var(--background);
+    text-decoration: none;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* --- ESTILOS PARA LA NUEVA TABLA DEL HEADER EN INDEX.HTML --- */
+.header-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.header-info-table thead th {
+    text-align: left;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-info-table thead h1 {
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.header-info-table thead p {
+    font-size: 1rem;
+    font-weight: normal;
+    margin: 0;
+}
+
+.header-info-table tbody td {
+    width: 25%;
+    padding: 0.75rem 1.5rem;
+    border: none; /* Quitamos bordes por defecto */
+    border-right: 1px solid var(--border-color);
+}
+
+/* Evitar que la última celda tenga borde derecho */
+.header-info-table td:last-child {
+    border-right: none;
+}

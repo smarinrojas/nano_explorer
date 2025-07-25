@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Block #{{ block.number }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Block #{{ block.number }}</h2>
+    <table class="details-table">
+        <tr>
+            <td>Hash</td>
+            <td>{{ block.hash.hex() }}</td>
+        </tr>
+        <tr>
+          <td>Parent Hash</td>
+          <td class="breakable"><a href="{{ url_for('block_details', block_identifier=block.parentHash.hex()) }}">{{ block.parentHash.hex() }}</a></td>
+        </tr>
+        <tr>
+            <td>Timestamp</td>
+            <td>{{ to_datetime(block.timestamp) }}</td>
+        </tr>
+        <tr>
+            <td>Transactions</td>
+            <td>{{ block.transactions|length }} transactions in this block</td>
+        </tr>
+        <tr>
+            <td>Miner</td>
+            <td><a href="{{ url_for('address_details', address=block.miner) }}">{{ block.miner }}</a></td>
+        </tr>
+        <tr>
+            <td>Gas Used</td>
+            <td>{{ block.gasUsed }}</td>
+        </tr>
+        <tr>
+            <td>Gas Limit</td>
+            <td>{{ block.gasLimit }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Txn Hash</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Value (ETH)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in block.transactions %}
+            <tr>
+                <td><a href="{{ url_for('transaction_details', tx_hash=tx.hash.hex()) }}">{{ tx.hash.hex()[:18] }}...</a></td>
+                <td><a href="{{ url_for('address_details', address=tx['from']) }}">{{ tx['from'][:18] }}...</a></td>
+                <td class="breakable">
+                  {% if tx.to %}
+                      <a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a>
+                  {% else %}
+                      <strong>[Contract Creation]</strong>
+                  {% endif %}
+              </td>
+                <td>{{ from_wei(tx.value, 'ether') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No transactions in this block.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

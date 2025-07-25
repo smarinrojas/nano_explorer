@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mini Explorer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        {% block header %}
+        <header>
+            <div class="header-grid">
+                <div class="header-title">
+                    <h1><a href="{{ url_for('index') }}">MINI EXPLORER</a></h1>
+                    <p>A minimalist design exploration for Geth</p>
+                </div>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <strong>Status</strong>
+                        {% if w3 %}
+                            <span class="status-connected">Connected</span>
+                        {% else %}
+                            <span class="status-disconnected">Offline</span>
+                        {% endif %}
+                    </div>
+                    <div class="meta-item">
+                        <strong>Node</strong>
+                        <span>{{ rpc_url or 'Not Set' }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+        {% endblock header %}
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <footer>
+        <p>Nano EVM explorer</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Transaction Details{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Transaction Details</h2>
+    <table class="details-table">
+        <tr>
+            <td>Transaction Hash</td>
+            <td class="breakable">{{ tx.hash.hex() }}</td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td><span class="status-{{ 'success' if receipt.status == 1 else 'fail' }}">{{ 'Success' if receipt.status == 1 else 'Fail' }}</span></td>
+        </tr>
+        <tr>
+            <td>Block</td>
+            <td><a href="{{ url_for('block_details', block_identifier=tx.blockNumber) }}">{{ tx.blockNumber }}</a></td>
+        </tr>
+        <tr>
+            <td>From</td>
+            <td><a href="{{ url_for('address_details', address=tx['from']) }}">{{ tx['from'] }}</a></td>
+        </tr>
+        <tr>
+            <td>To</td>
+            <td><a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a></td>
+        </tr>
+        <tr>
+            <td>Value</td>
+            <td>{{ from_wei(tx.value, 'ether') }} ETH</td>
+        </tr>
+        <tr>
+            <td>Gas Used by Transaction</td>
+            <td>{{ receipt.gasUsed }}</td>
+        </tr>
+         <tr>
+            <td>Gas Price</td>
+            <td>{{ from_wei(tx.gasPrice, 'gwei') }} Gwei</td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

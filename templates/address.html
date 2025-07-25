@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Address Details{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Address Details</h2>
+    <table class="details-table">
+        <tr>
+            <td>Address</td>
+            <td>{{ address }}</td>
+        </tr>
+        <tr>
+            <td>Balance</td>
+            <td>{{ balance_eth }} ETH</td>
+        </tr>
+        <tr>
+            <td>Transaction Count</td>
+            <td>{{ nonce }}</td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

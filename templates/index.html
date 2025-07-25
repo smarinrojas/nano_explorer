@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Mini Explorer{% endblock %}
+
+{% block header %}
+<header>
+    {% if w3 %}
+    <table class="header-info-table">
+        <thead>
+            <tr>
+                <th colspan="4">
+                    <h1>NANO EVM EXPLORER</h1>
+                    <p>A live dashboard for your Geth node</p>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Client</strong></td>
+                <td class="breakable">{{ w3.clientVersion }}</td>
+                <td><strong>Last Block</strong></td>
+                <td><a href="{{ url_for('block_details', block_identifier=w3.eth.block_number) }}">{{ w3.eth.block_number }}</a></td>
+            </tr>
+            <tr>
+                <td><strong>Chain ID</strong></td>
+                <td>{{ w3.eth.chain_id }}</td>
+                <td><strong>Gas Price</strong></td>
+                <td>{{ from_wei(w3.eth.gas_price, 'gwei') | round(2) }} Gwei</td>
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    {# Mantenemos el header simple si no hay conexión #}
+    {{ super() }}
+    {% endif %}
+</header>
+{% endblock header %}
+
+
+{# --- CONTENIDO PRINCIPAL DE LA PÁGINA --- #}
+{% block content %}
+    {% if not w3 %}
+    <div class="card">
+        <h2>Connection Failed</h2>
+        <p>Could not connect to the Geth node. Please check your <code>.env</code> file and ensure the node is running.</p>
+    </div>
+    {% else %}
+    <div class="card search-card">
+        <form method="POST">
+            <input type="text" name="search_query" placeholder="Search by Address / Tx Hash / Block Number" autofocus>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Latest Blocks</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Age</th>
+                    <th>Txn</th>
+                    <th>Miner</th>
+                    <th>Gas Used</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in latest_blocks %}
+                <tr>
+                    <td><a href="{{ url_for('block_details', block_identifier=block.number) }}">{{ block.number }}</a></td>
+                    <td>{{ to_datetime(block.timestamp).strftime('%H:%M:%S') }}</td>
+                    <td>{{ block.transactions|length }}</td>
+                    <td class="breakable"><a href="{{ url_for('address_details', address=block.miner) }}">{{ block.miner }}</a></td>
+                    <td>{{ block.gasUsed }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No blocks to show. Is the node syncing?</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+{% endblock %}
