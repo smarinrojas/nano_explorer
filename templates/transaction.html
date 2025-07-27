@@ -23,7 +23,17 @@
         </tr>
         <tr>
             <td>To</td>
-            <td><a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a></td>
+            <td>
+                {% if tx.to %}
+                    <a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a>
+                {% else %}
+                    [Contract Creation]
+                    {% if receipt.contractAddress %}
+                        <br>
+                        <small>Contract: <a href="{{ url_for('address_details', address=receipt.contractAddress) }}">{{ receipt.contractAddress }}</a></small>
+                    {% endif %}
+                {% endif %}
+            </td>
         </tr>
         <tr>
             <td>Value</td>
