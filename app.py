@@ -102,9 +102,17 @@ def transaction_details(tx_hash):
     if not w3: return redirect(url_for('index'))
     try:
         tx = w3.eth.get_transaction(tx_hash)
+        if not tx:
+            return render_template('error.html', message=f"Transaction '{tx_hash}' not found.")
+        
         receipt = w3.eth.get_transaction_receipt(tx_hash)
-        if not tx: return render_template('error.html', message=f"Transaction '{tx_hash}' not found.")
-        return render_template('transaction.html', tx=tx, receipt=receipt)
+        block = w3.eth.get_block(tx.blockNumber)
+        
+        # Use effectiveGasPrice for EIP-1559 transactions, otherwise use gasPrice
+        gas_price = receipt.get('effectiveGasPrice', tx.gasPrice)
+        tx_fee = receipt.gasUsed * gas_price
+
+        return render_template('transaction.html', tx=tx, receipt=receipt, block=block, tx_fee=tx_fee)
     except Exception as e:
         return render_template('error.html', message=str(e))
 

@@ -6,23 +6,37 @@
     <h2>Transaction Details</h2>
     <table class="details-table">
         <tr>
-            <td>Transaction Hash</td>
+            <td>Transaction Hash:</td>
             <td class="breakable">{{ tx.hash.hex() }}</td>
         </tr>
+        {% if tx.blockHash %}
         <tr>
-            <td>Status</td>
-            <td><span class="status-{{ 'success' if receipt.status == 1 else 'fail' }}">{{ 'Success' if receipt.status == 1 else 'Fail' }}</span></td>
+            <td>Block Hash:</td>
+            <td class="breakable">{{ tx.blockHash.hex() }}</td>
         </tr>
+        {% endif %}
         <tr>
-            <td>Block</td>
+            <td>Block Number:</td>
             <td><a href="{{ url_for('block_details', block_identifier=tx.blockNumber) }}">{{ tx.blockNumber }}</a></td>
         </tr>
         <tr>
-            <td>From</td>
+            <td>Transaction Index:</td>
+            <td>{{ tx.transactionIndex }}</td>
+        </tr>
+        <tr>
+            <td>Status:</td>
+            <td><span class="status-{{ 'success' if receipt.status == 1 else 'fail' }}">{{ 'Success' if receipt.status == 1 else 'Fail' }}</span></td>
+        </tr>
+        <tr>
+            <td>Timestamp:</td>
+            <td>{{ to_datetime(block.timestamp) }}</td>
+        </tr>
+        <tr>
+            <td>From:</td>
             <td><a href="{{ url_for('address_details', address=tx['from']) }}">{{ tx['from'] }}</a></td>
         </tr>
         <tr>
-            <td>To</td>
+            <td>To:</td>
             <td>
                 {% if tx.to %}
                     <a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a>
@@ -36,16 +50,125 @@
             </td>
         </tr>
         <tr>
-            <td>Value</td>
+            <td>Value:</td>
             <td>{{ from_wei(tx.value, 'ether') }} ETH</td>
         </tr>
         <tr>
-            <td>Gas Used by Transaction</td>
+            <td>Transaction Fee:</td>
+            <td>{{ from_wei(tx_fee, 'ether') }} ETH</td>
+        </tr>
+        <tr>
+            <td>Gas Limit:</td>
+            <td>{{ tx.gas }}</td>
+        </tr>
+        <tr>
+            <td>Gas Used by Transaction:</td>
             <td>{{ receipt.gasUsed }}</td>
         </tr>
-         <tr>
-            <td>Gas Price</td>
+        {% if 'maxFeePerGas' in tx %}
+        <tr>
+            <td>Max Fee per Gas:</td>
+            <td>{{ from_wei(tx.maxFeePerGas, 'gwei') }} Gwei</td>
+        </tr>
+        {% endif %}
+        {% if 'maxPriorityFeePerGas' in tx %}
+        <tr>
+            <td>Max Priority Fee per Gas:</td>
+            <td>{{ from_wei(tx.maxPriorityFeePerGas, 'gwei') }} Gwei</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>Gas Price:</td>
             <td>{{ from_wei(tx.gasPrice, 'gwei') }} Gwei</td>
+        </tr>
+        <tr>
+            <td>Transaction Type:</td>
+            <td>{{ tx.type }}</td>
+        </tr>
+        <tr>
+            <td>Nonce:</td>
+            <td>{{ tx.nonce }}</td>
+        </tr>
+        <tr>
+            <td>Input Data:</td>
+            <td class="breakable-all">{{ tx.input }}</td>
+        </tr>
+        {% if tx.accessList %}
+        <tr>
+            <td>Access List:</td>
+            <td class="breakable-all">{{ tx.accessList }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>R:</td>
+            <td class="breakable">{{ tx.r.hex() }}</td>
+        </tr>
+        <tr>
+            <td>S:</td>
+            <td class="breakable">{{ tx.s.hex() }}</td>
+        </tr>
+        <tr>
+            <td>V:</td>
+            <td>{{ tx.v }}</td>
+        </tr>
+        <tr>
+            <td>Chain ID:</td>
+            <td>{{ tx.chainId }}</td>
+        </tr>
+    </table>
+</div>
+
+{% if receipt.logs %}
+<div class="card">
+    <h2>Event Logs</h2>
+    {% for log in receipt.logs %}
+    <div class="log-entry">
+        <p><strong>Log Index:</strong> {{ log.logIndex }}</p>
+        <p><strong>Address:</strong> <a href="{{ url_for('address_details', address=log.address) }}">{{ log.address }}</a></p>
+        <div>
+            <strong>Topics:</strong>
+            <ul class="log-topics">
+                {% for topic in log.topics %}
+                <li class="breakable">{{ topic.hex() }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <p><strong>Data:</strong></p>
+        <pre class="breakable-all">{{ log.data.hex() }}</pre>
+    </div>
+    {% if not loop.last %}<hr>{% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Receipt Details</h2>
+    <table class="details-table">
+        <tr>
+            <td>Cumulative Gas Used:</td>
+            <td>{{ receipt.cumulativeGasUsed }}</td>
+        </tr>
+        {% if 'effectiveGasPrice' in receipt %}
+        <tr>
+            <td>Effective Gas Price:</td>
+            <td>{{ from_wei(receipt.effectiveGasPrice, 'gwei') }} Gwei</td>
+        </tr>
+        {% endif %}
+        {% if 'blobGasPrice' in receipt %}
+        <tr>
+            <td>Blob Gas Price:</td>
+            <td>{{ from_wei(receipt.blobGasPrice, 'gwei') }} Gwei</td>
+        </tr>
+        {% endif %}
+        {% if receipt.contractAddress %}
+        <tr>
+            <td>Contract Address:</td>
+            <td><a href="{{ url_for('address_details', address=receipt.contractAddress) }}">{{ receipt.contractAddress }}</a></td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>Logs Bloom:</td>
+            <td class="breakable-all">{{ receipt.logsBloom.hex() }}</td>
         </tr>
     </table>
 </div>
