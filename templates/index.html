@@ -2,39 +2,7 @@
 
 {% block title %}Dashboard - Mini Explorer{% endblock %}
 
-{% block header %}
-<header>
-    {% if w3 %}
-    <table class="header-info-table">
-        <thead>
-            <tr>
-                <th colspan="4">
-                    <h1>NANO EVM EXPLORER</h1>
-                    <p>A live dashboard for your Geth node</p>
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>Client</strong></td>
-                <td class="breakable">{{ w3.clientVersion }}</td>
-                <td><strong>Last Block</strong></td>
-                <td><a href="{{ url_for('block_details', block_identifier=w3.eth.block_number) }}">{{ w3.eth.block_number }}</a></td>
-            </tr>
-            <tr>
-                <td><strong>Chain ID</strong></td>
-                <td>{{ w3.eth.chain_id }}</td>
-                <td><strong>Gas Price</strong></td>
-                <td>{{ from_wei(w3.eth.gas_price, 'gwei') | round(2) }} Gwei</td>
-            </tr>
-        </tbody>
-    </table>
-    {% else %}
-    {# Mantenemos el header simple si no hay conexión #}
-    {{ super() }}
-    {% endif %}
-</header>
-{% endblock header %}
+
 
 
 {# --- CONTENIDO PRINCIPAL DE LA PÁGINA --- #}
@@ -45,6 +13,28 @@
         <p>Could not connect to the Geth node. Please check your <code>.env</code> file and ensure the node is running.</p>
     </div>
     {% else %}
+    <div class="card">
+        <h2>Node Status</h2>
+        <table class="details-table">
+            <tr>
+                <td><strong>Client Version</strong></td>
+                <td class="breakable">{{ w3.clientVersion }}</td>
+            </tr>
+            <tr>
+                <td><strong>Chain ID</strong></td>
+                <td>{{ w3.eth.chain_id }}</td>
+            </tr>
+            <tr>
+                <td><strong>Latest Block</strong></td>
+                <td><a href="{{ url_for('block_details', block_identifier=w3.eth.block_number) }}">{{ w3.eth.block_number }}</a></td>
+            </tr>
+            <tr>
+                <td><strong>Gas Price</strong></td>
+                <td>{{ from_wei(w3.eth.gas_price, 'gwei') | round(2) }} Gwei</td>
+            </tr>
+        </table>
+    </div>
+
     <div class="card search-card">
         <form method="POST">
             <input type="text" name="search_query" placeholder="Search by Address / Tx Hash / Block Number" autofocus>
