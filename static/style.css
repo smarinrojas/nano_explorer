@@ -1,6 +1,8 @@
 /* static/style.css */
 
 /* --- "The Monospace Web" Style Color Variables --- */
+@import url('https://fonts.cdnfonts.com/css/jetbrains-mono-2');
+
 :root {
     --background: #ffffff;
     --foreground: #000000;
@@ -13,7 +15,7 @@
 body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: 'Fira Code', 'Andale Mono', 'Courier New', monospace;
+    font-family: 'JetBrains Mono', sans-serif;
     margin: 0;
     line-height: 1.6;
     border-top: 5px solid var(--top-border);

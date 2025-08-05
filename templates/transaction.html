@@ -91,7 +91,7 @@
         </tr>
         <tr>
             <td>Input Data:</td>
-            <td class="breakable-all">{{ tx.input }}</td>
+            <td class="breakable-all">{{ tx.input.hex() }}</td>
         </tr>
         {% if tx.accessList %}
         <tr>
