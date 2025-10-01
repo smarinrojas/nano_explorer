@@ -60,16 +60,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 resultDiv.textContent = 'Executing...';
 
+                const isTransaction = func.stateMutability !== 'view' && func.stateMutability !== 'pure';
+                const privateKey = document.getElementById('private-key').value;
+
+                if (isTransaction && !privateKey) {
+                    resultDiv.textContent = 'Error: Private key is required to send a transaction.';
+                    return;
+                }
+
                 try {
+                    const payload = {
+                        address: contract.address,
+                        abi: abi,
+                        function: func.name,
+                        args: args,
+                        private_key: isTransaction ? privateKey : null
+                    };
+
                     const response = await fetch('/api/interact', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            address: contract.address,
-                            abi: abi,
-                            function: func.name,
-                            args: args
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     const data = await response.json();

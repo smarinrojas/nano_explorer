@@ -8,6 +8,15 @@
         <h3>{{ contract.name }}</h3>
         <p>{{ contract.address }}</p>
     </div>
+
+    <div class="form-section private-key-section">
+        <div class="form-group">
+            <label for="private-key">Private Key (for Transactions)</label>
+            <input type="password" id="private-key" placeholder="Enter your private key to sign transactions">
+            <small><strong>Warning:</strong> For local development only. Do not use a key with real funds.</small>
+        </div>
+    </div>
+
     <div id="contract-functions">
         <!-- Functions will be loaded here by contract_interaction.js -->
     </div>

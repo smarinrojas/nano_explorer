@@ -215,6 +215,7 @@ def handle_interaction():
     data = request.get_json()
     contract_address = data.get('address')
     abi = data.get('abi')
+    private_key = data.get('private_key')
     function_name = data.get('function')
     args = data.get('args', [])
 
@@ -225,40 +226,70 @@ def handle_interaction():
         return jsonify({'error': 'Invalid contract address'}), 400
 
     try:
-        # Ensure address is checksummed before interaction
         checksum_address = Web3.to_checksum_address(contract_address)
         contract = w3.eth.contract(address=checksum_address, abi=abi)
         func = getattr(contract.functions, function_name)
         
-        # Find the function ABI to inspect input types
         func_abi = next((item for item in abi if item.get('type') == 'function' and item.get('name') == function_name), None)
 
         if func_abi is None:
             return jsonify({'error': f'Function {function_name} not found in ABI'}), 404
 
-        # Process arguments, converting addresses to checksum format
         processed_args = []
         if 'inputs' in func_abi and len(args) == len(func_abi['inputs']):
             for i, arg_input in enumerate(func_abi['inputs']):
-                if arg_input.get('type') == 'address':
-                    try:
-                        # Convert address arguments to checksum format
-                        processed_args.append(Web3.to_checksum_address(args[i]))
-                    except ValueError:
-                        return jsonify({'error': f'Invalid address format for argument {i+1}: {args[i]}'}), 400
-                else:
-                    processed_args.append(args[i])
-        else:
-             processed_args = args # Fallback if ABI doesn't match
+                arg_type = arg_input.get('type')
+                arg_value = args[i]
 
-        # For now, we only handle read-only 'call()'s
-        result = func(*processed_args).call()
+                try:
+                    if arg_type.startswith(('uint', 'int')):
+                        if arg_value:
+                            processed_args.append(int(arg_value))
+                        else:
+                            processed_args.append(0) # Default to 0 if empty
+                    elif arg_type == 'bool':
+                        processed_args.append(arg_value.lower() in ['true', '1'])
+                    elif arg_type == 'address' and arg_value:
+                        processed_args.append(Web3.to_checksum_address(arg_value))
+                    else:
+                        processed_args.append(arg_value)
+                except (ValueError, TypeError) as e:
+                    return jsonify({'error': f'Invalid format for argument {i+1} (type {arg_type}): {str(e)}'}), 400
+        else:
+            processed_args = args
+
+        is_transaction = func_abi.get('stateMutability') not in ['view', 'pure']
+
+        if is_transaction:
+            if not private_key:
+                return jsonify({'error': 'Private key is required for transactions'}), 400
+            
+            try:
+                account = w3.eth.account.from_key(private_key)
+                nonce = w3.eth.get_transaction_count(account.address)
+
+                tx_params = {
+                    'from': account.address,
+                    'nonce': nonce,
+                    'gas': 2000000,
+                    'gasPrice': w3.eth.gas_price
+                }
+
+                transaction = func(*processed_args).build_transaction(tx_params)
+                signed_tx = w3.eth.account.sign_transaction(transaction, private_key)
+                tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+                result = tx_hash.hex()
+
+            except Exception as e:
+                return jsonify({'error': f'Transaction failed: {str(e)}'}), 500
+        else:
+            result = func(*processed_args).call()
         
-        # Convert bytes to hex for JSON serialization if needed
         if isinstance(result, bytes):
             result = result.hex()
 
         return jsonify({'result': result})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -151,7 +151,6 @@ td.breakable, .details-table td:nth-child(2) {
 
 a {
     color: var(--foreground);
-    text-decoration: var(--link-decoration);
     font-weight: bold;
 }
 a:hover {
@@ -160,19 +159,22 @@ a:hover {
     text-decoration: none;
 }
 
-footer {
-    text-align: center;
-    padding: 2rem 0;
-    color: #666;
+.contract-interaction-header p {
+    font-family: 'Courier New', Courier, monospace;
+    color: #555;
     font-size: 0.9rem;
 }
 
-/* --- ESTILOS PARA LA NUEVA TABLA DEL HEADER EN INDEX.HTML --- */
-.header-info-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1px solid var(--border-color);
-    margin-bottom: 2rem;
+.private-key-section {
+    padding: 1.5rem 0;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.private-key-section small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #d9534f; /* Red warning color */
 }
 
 .header-info-table thead th {
@@ -223,6 +225,7 @@ footer {
 }
 
 .form-group input[type="text"],
+.form-group input[type="password"],
 .form-group textarea {
     width: 100%;
     padding: 10px;
