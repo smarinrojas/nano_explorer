@@ -39,7 +39,10 @@
             <td>To:</td>
             <td>
                 {% if tx.to %}
-                    <a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a>
+                    <a href="{{ url_for('address_details', address=tx.to) }}">{{ tx.to }}</a> 
+                    {% if contract_name %}
+                        <span class="contract-name">({{ contract_name }})</span>
+                    {% endif %}
                 {% else %}
                     [Contract Creation]
                     {% if receipt.contractAddress %}
@@ -93,6 +96,24 @@
             <td>Input Data:</td>
             <td class="breakable-all">{{ tx.input.hex() }}</td>
         </tr>
+        {% if decoded_input %}
+        <tr>
+            <td>Decoded Input Data:</td>
+            <td>
+                <div class="decoded-input">
+                    <p><strong>Function:</strong> {{ decoded_input.function }}({% for type, val in decoded_input.params.items() %}{{ type }} <em>{{ val }}</em>{% if not loop.last %}, {% endif %}{% endfor %})</p>
+                    <div class="params-table">
+                        <p><strong>Parameters:</strong></p>
+                        <ul>
+                        {% for key, value in decoded_input.params.items() %}
+                            <li><strong>{{ key }}:</strong> <span class="breakable">{{ value }}</span></li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endif %}
         {% if tx.accessList %}
         <tr>
             <td>Access List:</td>
@@ -118,9 +139,28 @@
     </table>
 </div>
 
-{% if receipt.logs %}
+{% if decoded_logs %}
+<div class="card">
+    <h2>Decoded Event Logs</h2>
+    {% for log in decoded_logs %}
+    <div class="log-entry">
+        <p><strong>Event:</strong> {{ log.name }}</p>
+        <div>
+            <strong>Arguments:</strong>
+            <ul class="log-topics">
+                {% for key, value in log.args.items() %}
+                <li><strong>{{ key }}:</strong> <span class="breakable">{{ value }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% if not loop.last %}<hr>{% endif %}
+    {% endfor %}
+</div>
+{% elif receipt.logs %}
 <div class="card">
     <h2>Event Logs</h2>
+    <p class="text-muted">Could not decode logs. ABI might be missing or incorrect for the target contract.</p>
     {% for log in receipt.logs %}
     <div class="log-entry">
         <p><strong>Log Index:</strong> {{ log.logIndex }}</p>

@@ -127,7 +127,54 @@ def transaction_details(tx_hash):
         gas_price = receipt.get('effectiveGasPrice', tx.gasPrice)
         tx_fee = receipt.gasUsed * gas_price
 
-        return render_template('transaction.html', tx=tx, receipt=receipt, block=block, tx_fee=tx_fee)
+        decoded_input = None
+        decoded_logs = []
+        contract_name = None
+
+        # If the transaction is a contract interaction, try to decode the input data and logs
+        if tx.to:
+            known_contract = ContractABI.query.filter_by(address=tx.to).first()
+            if known_contract:
+                try:
+                    contract_name = known_contract.name
+                    abi = json.loads(known_contract.abi)
+                    contract_instance = w3.eth.contract(address=tx.to, abi=abi)
+
+                    # 1. Decode input data
+                    if tx.input and tx.input != '0x':
+                        func_obj, func_params = contract_instance.decode_function_input(tx.input)
+                        decoded_input = {
+                            'function': func_obj.fn_name,
+                            'params': dict(func_params)
+                        }
+
+                    # 2. Decode logs (events)
+                    if receipt['logs']:
+                        for event_abi in contract_instance.events:
+                            for log in receipt['logs']:
+                                try:
+                                    # process_log will raise an exception if the log doesn't match the event
+                                    event_data = event_abi().process_log(log)
+                                    decoded_logs.append({
+                                        'name': event_abi.event_name,
+                                        'args': dict(event_data['args'])
+                                    })
+                                except Exception:
+                                    pass # Not this event, continue
+
+                except Exception as e:
+                    print(f"Error decoding transaction data: {e}") # Log error but don't crash
+
+        return render_template(
+            'transaction.html', 
+            tx=tx, 
+            receipt=receipt, 
+            block=block, 
+            tx_fee=tx_fee,
+            contract_name=contract_name,
+            decoded_input=decoded_input,
+            decoded_logs=decoded_logs
+        )
     except Exception as e:
         return render_template('error.html', message=str(e))
 
