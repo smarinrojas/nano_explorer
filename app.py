@@ -246,7 +246,7 @@ def handle_interaction():
                         if arg_value:
                             processed_args.append(int(arg_value))
                         else:
-                            processed_args.append(0) # Default to 0 if empty
+                            processed_args.append(0)
                     elif arg_type == 'bool':
                         processed_args.append(arg_value.lower() in ['true', '1'])
                     elif arg_type == 'address' and arg_value:
@@ -277,7 +277,9 @@ def handle_interaction():
 
                 transaction = func(*processed_args).build_transaction(tx_params)
                 signed_tx = w3.eth.account.sign_transaction(transaction, private_key)
-                tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+
+                # Send the raw transaction using the correct attribute
+                tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
                 result = tx_hash.hex()
 
             except Exception as e:
