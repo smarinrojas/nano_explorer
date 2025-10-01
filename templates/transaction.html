@@ -139,42 +139,37 @@
     </table>
 </div>
 
-{% if decoded_logs %}
-<div class="card">
-    <h2>Decoded Event Logs</h2>
-    {% for log in decoded_logs %}
-    <div class="log-entry">
-        <p><strong>Event:</strong> {{ log.name }}</p>
-        <div>
-            <strong>Arguments:</strong>
-            <ul class="log-topics">
-                {% for key, value in log.args.items() %}
-                <li><strong>{{ key }}:</strong> <span class="breakable">{{ value }}</span></li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    {% if not loop.last %}<hr>{% endif %}
-    {% endfor %}
-</div>
-{% elif receipt.logs %}
+{% if processed_logs %}
 <div class="card">
     <h2>Event Logs</h2>
-    <p class="text-muted">Could not decode logs. ABI might be missing or incorrect for the target contract.</p>
-    {% for log in receipt.logs %}
+    {% for p_log in processed_logs %}
     <div class="log-entry">
-        <p><strong>Log Index:</strong> {{ log.logIndex }}</p>
-        <p><strong>Address:</strong> <a href="{{ url_for('address_details', address=log.address) }}">{{ log.address }}</a></p>
-        <div>
-            <strong>Topics:</strong>
-            <ul class="log-topics">
-                {% for topic in log.topics %}
-                <li class="breakable">{{ topic.hex() }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        <p><strong>Data:</strong></p>
-        <pre class="breakable-all">{{ log.data.hex() }}</pre>
+        {% if p_log.decoded %}
+            <p class="text-muted">From Contract: <strong>{{ p_log.decoded.contract_name }}</strong></p>
+            <p><strong>Event:</strong> {{ p_log.decoded.name }}</p>
+            <div>
+                <strong>Arguments:</strong>
+                <ul class="log-topics">
+                    {% for key, value in p_log.decoded.args.items() %}
+                    <li><strong>{{ key }}:</strong> <span class="breakable">{{ value }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p class="text-muted">Raw Log (Could not decode)</p>
+            <p><strong>Log Index:</strong> {{ p_log.raw.logIndex }}</p>
+            <p><strong>Address:</strong> <a href="{{ url_for('address_details', address=p_log.raw.address) }}">{{ p_log.raw.address }}</a></p>
+            <div>
+                <strong>Topics:</strong>
+                <ul class="log-topics">
+                    {% for topic in p_log.raw.topics %}
+                    <li class="breakable">{{ topic.hex() }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <p><strong>Data:</strong></p>
+            <pre class="breakable-all">{{ p_log.raw.data.hex() }}</pre>
+        {% endif %}
     </div>
     {% if not loop.last %}<hr>{% endif %}
     {% endfor %}
