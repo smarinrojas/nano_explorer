@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Interact with {{ contract.name }} - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="interaction-section card">
+    <div class="contract-interaction-header">
+        <h3>{{ contract.name }}</h3>
+        <p>{{ contract.address }}</p>
+    </div>
+    <div id="contract-functions">
+        <!-- Functions will be loaded here by contract_interaction.js -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Pass contract data from Flask to JavaScript
+    const contract = {{ contract|tojson }};
+    const abi = {{ abi|tojson }};
+</script>
+<script src="{{ url_for('static', filename='contract_interaction.js') }}"></script>
+{% endblock %}

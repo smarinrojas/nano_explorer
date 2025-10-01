@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Interact with Contracts - {{ super() }}{% endblock %}
+
+{% block content %}
+<h2>Interact with Smart Contracts</h2>
+<p>Save contract ABIs and interact with their functions.</p>
+
+<div class="interact-container">
+    <div class="abi-list-section card">
+        <div class="abi-list-header">
+            <h3>Saved Contracts</h3>
+            <a href="{{ url_for('import_contract_page') }}" class="button-like">+ Import New Contract</a>
+        </div>
+        <div id="abi-list">
+            <!-- ABIs will be loaded here by interact.js -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='interact.js') }}"></script>
+{% endblock %}

@@ -45,7 +45,7 @@ header {
 
 .header-title h1 {
     margin: 0 0 0.5rem 0;
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: bold;
 }
 
@@ -202,4 +202,140 @@ footer {
 /* Evitar que la última celda tenga borde derecho */
 .header-info-table td:last-child {
     border-right: none;
+}
+
+/* --- Interact Page --- */
+.interact-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--background);
+    border: 1px solid var(--border-color);
+    color: var(--foreground);
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Styles for the Interact page list */
+.interact-container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.abi-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.abi-list-header h3 {
+    margin: 0;
+}
+
+.abi-list-section .abi-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    margin-bottom: -1px; /* Overlap borders */
+    cursor: pointer;
+    position: relative;
+}
+
+.abi-list-section .abi-item:first-of-type {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.abi-list-section .abi-item:last-of-type {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin-bottom: 0;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #d90429;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.delete-btn:hover {
+    color: var(--background);
+    background-color: #d90429;
+}
+
+.abi-list-section .abi-item:hover {
+    background-color: var(--foreground);
+    color: var(--background);
+}
+
+.abi-list-section .abi-item.selected {
+    background-color: var(--foreground);
+    color: var(--background);
+    font-weight: bold;
+}
+
+.abi-list-section .abi-item.selected::before {
+    content: '▶';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--background);
+}
+
+.function-item {
+    margin-bottom: 1.5rem;
+}
+
+.function-form {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.function-form:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.function-form:first-of-type {
+    padding-top: 0;
+}
+
+.function-item h4 {
+    margin: 0 0 0.5rem 0;
+    font-weight: bold;
+}
+
+.function-item button {
+    margin-top: 0.5rem;
 }

@@ -16,6 +16,9 @@
             <div class="header-grid">
                 <div class="header-title">
                     <h1><a href="{{ url_for('index') }}">MINI EXPLORER</a></h1>
+                    <nav>
+                        <a href="{{ url_for('interact') }}">Interact</a>
+                    </nav>
                     <p>A minimalist design exploration for Geth</p>
                 </div>
                 <div class="header-meta">
@@ -41,8 +44,10 @@
         </main>
     </div>
     
-    <footer>
+        <footer>
         <p>Nano EVM explorer</p>
-    </footer>
+        </footer>
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>
