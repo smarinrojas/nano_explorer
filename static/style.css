@@ -342,3 +342,38 @@ a:hover {
 .function-item button {
     margin-top: 0.5rem;
 }
+
+/* --- Transaction Error Details --- */
+.error-details {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #d90429; /* Red border */
+    background-color: #fff0f0;
+    border-radius: 4px;
+}
+
+.error-details p {
+    margin: 0 0 0.5rem 0;
+}
+
+.error-params ul {
+    list-style-type: none;
+    padding-left: 1rem;
+    margin: 0;
+}
+
+.error-params li {
+    margin-bottom: 0.25rem;
+}
+
+/* --- ABI Tables for Events/Errors --- */
+.abi-table em {
+    font-style: italic;
+    color: #555;
+}
+
+.abi-table td:first-child {
+    /* Let the browser determine the width based on content */
+    width: 1%; /* Trick to make the column as small as possible but still expandable */
+    white-space: nowrap;
+}

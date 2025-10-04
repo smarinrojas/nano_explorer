@@ -130,8 +130,64 @@ def transaction_details(tx_hash):
         decoded_input = None
         processed_logs = []
         contract_name = None
+        decoded_error = None
 
-        # 1. Attempt to decode the transaction input data
+        # 1. If transaction failed, try to decode the revert reason
+        if receipt.status == 0:
+            try:
+                # This transaction will fail, but the exception will contain the revert data
+                tx_for_call = {
+                    'to': tx.to, 'from': tx['from'], 'value': tx.value, 'data': tx.input,
+                    'gas': tx.gas, 'gasPrice': tx.gasPrice, 'nonce': tx.nonce,
+                }
+                w3.eth.call(tx_for_call, tx.blockNumber)
+            except Exception as e:
+                hex_str = None
+                # Based on user feedback, the error data is in a tuple in e.args
+                if e.args and isinstance(e.args[0], (tuple, list)) and e.args[0]:
+                    hex_str = e.args[0][0]
+                elif e.args and isinstance(e.args[0], str) and e.args[0].startswith('0x'):
+                    hex_str = e.args[0]
+                
+                if hex_str:
+                    error_selector = hex_str[:10]
+                    # Initialize a basic error object with the signature and the full raw data
+                    decoded_error = {
+                        'error_signature': error_selector,
+                        'raw_error_data': hex_str
+                    }
+                    try:
+                        all_contracts = ContractABI.query.all()
+                        for known_contract in all_contracts:
+                            abi = json.loads(known_contract.abi)
+                            for item in abi:
+                                if item.get('type') == 'error':
+                                    error_signature_text = f"{item['name']}({','.join([inp['type'] for inp in item['inputs']])})"
+                                    abi_error_selector = w3.keccak(text=error_signature_text).hex()[0:10]
+                                    if abi_error_selector == error_selector:
+                                        error_abi = item
+                                        param_types = [inp['type'] for inp in error_abi['inputs']]
+                                        param_values = w3.codec.decode(param_types, bytes.fromhex(hex_str[10:]))
+                                        # Update the object with full details
+                                        decoded_error.update({
+                                            'contract_name': known_contract.name,
+                                            'error_name': error_abi['name'],
+                                            'params': {error_abi['inputs'][i]['name']: param_values[i] for i in range(len(param_values))}
+                                        })
+                                        break # Error found
+                            if decoded_error.get('error_name'): # Check if we found the full error
+                                break # Contract found
+                        if decoded_error.get('error_name'):
+                            print(f"Decoded revert reason: {decoded_error}")
+                        else:
+                            print(f"Could not fully decode error, but found signature: {error_selector}")
+                    except Exception as decode_e:
+                        import traceback
+                        print("--- ERROR DURING DECODING ---")
+                        traceback.print_exc()
+
+
+        # 2. Attempt to decode the transaction input data
         if tx.to:
             checksum_to_address = Web3.to_checksum_address(tx.to)
             known_contract = ContractABI.query.filter(ContractABI.address.ilike(checksum_to_address)).first()
@@ -183,7 +239,8 @@ def transaction_details(tx_hash):
             tx_fee=tx_fee,
             contract_name=contract_name,
             decoded_input=decoded_input,
-            processed_logs=processed_logs
+            processed_logs=processed_logs,
+            decoded_error=decoded_error
         )
     except Exception as e:
         return render_template('error.html', message=str(e))
@@ -206,6 +263,12 @@ def contract_interaction_page(contract_id):
     # We need to pass the contract data and the parsed ABI to the template
     contract_data = {'id': contract.id, 'name': contract.name, 'address': contract.address}
     abi = json.loads(contract.abi)
+
+    # Add signature to each event and error for display in the UI
+    for item in abi:
+        if item.get('type') in ['event', 'error']:
+            signature_text = f"{item['name']}({','.join([inp['type'] for inp in item.get('inputs', [])])})"
+            item['signature'] = w3.keccak(text=signature_text).hex()[:10]
     return render_template('contract_interaction.html', contract=contract_data, abi=abi)
 
 @app.route('/api/contracts', methods=['POST'])

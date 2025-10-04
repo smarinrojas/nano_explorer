@@ -21,13 +21,81 @@
         <!-- Functions will be loaded here by contract_interaction.js -->
     </div>
 </div>
+
+<div class="card">
+    <h2>Events</h2>
+    <table class="details-table abi-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Signature</th>
+                <th>Parameters</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in abi %}
+                {% if item.type == 'event' %}
+                <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td><code>{{ item.signature }}</code></td>
+                    <td class="breakable">
+                        {% if item.inputs %}
+                            (
+                            {% for input in item.inputs %}
+                                {{ input.type }} {{ 'indexed' if input.indexed }} <em>{{ input.name }}</em>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                            )
+                        {% else %}
+                            ( )
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Errors</h2>
+    <table class="details-table abi-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Signature</th>
+                <th>Parameters</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in abi %}
+                {% if item.type == 'error' %}
+                <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td><code>{{ item.signature }}</code></td>
+                    <td class="breakable">
+                        {% if item.inputs %}
+                            (
+                            {% for input in item.inputs %}
+                                {{ input.type }} <em>{{ input.name }}</em>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                            )
+                        {% else %}
+                            ( )
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     // Pass contract data from Flask to JavaScript
-    const contract = {{ contract|tojson }};
-    const abi = {{ abi|tojson }};
+    const contract = {{ contract|tojson|safe }};
+    const abi = {{ abi|tojson|safe }};
 </script>
 <script src="{{ url_for('static', filename='contract_interaction.js') }}"></script>
 {% endblock %}

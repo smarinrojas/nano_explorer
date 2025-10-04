@@ -25,7 +25,28 @@
         </tr>
         <tr>
             <td>Status:</td>
-            <td><span class="status-{{ 'success' if receipt.status == 1 else 'fail' }}">{{ 'Success' if receipt.status == 1 else 'Fail' }}</span></td>
+            <td>
+                <span class="status-{{ 'success' if receipt.status == 1 else 'fail' }}">{{ 'Success' if receipt.status == 1 else 'Fail' }}</span>
+                {% if receipt.status == 0 and decoded_error %}
+                <div class="error-details">
+                    {% if decoded_error.error_name %}
+                        <p><strong>Decoded As:</strong> {{ decoded_error.contract_name }} &rarr; {{ decoded_error.error_name }}</p>
+                    {% endif %}
+                    <p><strong>Signature:</strong> <code>{{ decoded_error.error_signature }}</code></p>
+                    <p><strong>Raw Error Data:</strong> <code class="breakable-all">{{ decoded_error.raw_error_data }}</code></p>
+                    {% if decoded_error.params %}
+                    <div class="error-params">
+                        <p><strong>Parameters:</strong></p>
+                        <ul>
+                        {% for key, value in decoded_error.params.items() %}
+                            <li><strong>{{ key }}:</strong> <span class="breakable">{{ value }}</span></li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </td>
         </tr>
         <tr>
             <td>Timestamp:</td>
