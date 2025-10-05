@@ -168,7 +168,8 @@ def transaction_details(tx_hash):
                         for item in abi:
                             if item.get('type') == 'error':
                                 error_signature_text = f"{item['name']}({','.join([inp['type'] for inp in item['inputs']])})"
-                                if w3.keccak(text=error_signature_text).hex()[0:10] == error_selector:
+                                abi_error_selector = '0x' + w3.keccak(text=error_signature_text).hex()[:8]
+                                if abi_error_selector == error_selector:
                                     param_types = [inp['type'] for inp in item['inputs']]
                                     param_values = w3.codec.decode(param_types, bytes.fromhex(hex_str[10:]))
                                     decoded_error.update({
@@ -264,8 +265,8 @@ def contract_interaction_page(contract_id):
     for item in abi:
         if item.get('type') in ['event', 'error']:
             signature_text = f"{item['name']}({','.join([inp['type'] for inp in item.get('inputs', [])])})"
-            # Correctly slice the first 4 bytes (8 hex chars) after '0x'
-            item['signature'] = w3.keccak(text=signature_text).hex()[0:10]
+            # Correctly take the first 4 bytes (8 hex characters) and add the '0x' prefix.
+            item['signature'] = '0x' + w3.keccak(text=signature_text).hex()[:8]
     return render_template('contract_interaction.html', contract=contract_data, abi=abi)
 
 @app.route('/api/contracts', methods=['POST'])
