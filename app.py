@@ -53,10 +53,18 @@ def utility_processor():
     def to_datetime(timestamp):
         return datetime.fromtimestamp(timestamp)
 
+    client_version = None
+    if w3:
+        try:
+            client_version = w3.client_version
+        except Exception:
+            client_version = "Error fetching version"
+
     # Inject the w3 instance and RPC URL into the template context
     return dict(
         w3=w3, 
         rpc_url=RPC_URL,
+        client_version=client_version,
         from_wei=from_wei, 
         to_datetime=to_datetime
     )
