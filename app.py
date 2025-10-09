@@ -332,6 +332,66 @@ def manage_contract(contract_id):
         db.session.commit()
         return jsonify({'message': 'Contract deleted successfully'}), 200
 
+@app.route('/api/contracts/import', methods=['POST'])
+def import_contracts_bulk():
+    contracts_data = request.get_json()
+    if not isinstance(contracts_data, list):
+        return jsonify({'error': 'Request body must be a JSON array of contracts'}), 400
+
+    added_count = 0
+    errors = []
+
+    for contract_data in contracts_data:
+        name = contract_data.get('name')
+        address = contract_data.get('address')
+        abi_data = contract_data.get('abi')
+
+        if not all([name, address, abi_data]):
+            errors.append({'error': 'Missing name, address, or ABI for an entry', 'data': name or 'N/A'})
+            continue
+
+        if not Web3.is_address(address):
+            errors.append({'error': f'Invalid Ethereum address for {name}', 'data': address})
+            continue
+        
+        checksum_address = Web3.to_checksum_address(address)
+
+        try:
+            abi_json = json.dumps(abi_data) if isinstance(abi_data, (dict, list)) else abi_data
+            json.loads(abi_json) # Validate
+        except (json.JSONDecodeError, TypeError):
+            errors.append({'error': f'Invalid ABI format for {name}', 'data': abi_data})
+            continue
+
+        if ContractABI.query.filter((ContractABI.name == name) | (ContractABI.address == checksum_address)).first():
+            errors.append({'error': f'Contract with name {name} or address {address} already exists', 'data': name})
+            continue
+
+        new_contract = ContractABI(name=name, address=checksum_address, abi=abi_json)
+        db.session.add(new_contract)
+        added_count += 1
+
+    if added_count > 0:
+        db.session.commit()
+
+    response = {
+        'message': f'Processed {len(contracts_data)} entries. Added {added_count} new contracts.',
+        'errors': errors
+    }
+    status_code = 207 if errors else 201
+    return jsonify(response), status_code
+
+
+@app.route('/api/contracts/all', methods=['DELETE'])
+def clear_all_contracts():
+    try:
+        num_deleted = db.session.query(ContractABI).delete()
+        db.session.commit()
+        return jsonify({'message': f'Successfully deleted {num_deleted} contracts.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+
 
 @app.route('/api/interact', methods=['POST'])
 def handle_interaction():
