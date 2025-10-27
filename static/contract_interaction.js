@@ -89,7 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error(data.error || 'Interaction failed');
                     }
 
-                    resultDiv.textContent = `Result: ${JSON.stringify(data.result)}`;
+                    const res = data.result;
+                    const isTxHash = (typeof res === 'string') && /^0x[0-9a-fA-F]{64}$/.test(res);
+                    if (isTxHash) {
+                        resultDiv.innerHTML = `Result: <a href="/tx/${res}">${res}</a>`;
+                    } else {
+                        const display = (typeof res === 'object') ? JSON.stringify(res) : String(res);
+                        resultDiv.textContent = `Result: ${display}`;
+                    }
                 } catch (error) {
                     resultDiv.textContent = `Error: ${error.message}`;
                 }
