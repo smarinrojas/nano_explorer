@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Networks - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Networks</h2>
+  <p>Manage RPC endpoints. Set a default and activate per-session.</p>
+
+  <div class="form-section" style="margin-bottom: 1rem;">
+    <form id="network-form">
+      <div class="form-group">
+        <label for="net-name">Name</label>
+        <input type="text" id="net-name" placeholder="e.g. Local Geth" required>
+      </div>
+      <div class="form-group">
+        <label for="net-rpc">RPC URL</label>
+        <input type="text" id="net-rpc" placeholder="http://127.0.0.1:8545" required>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="net-default"> Set as default</label>
+      </div>
+      <div class="form-actions">
+        <button type="submit">Add Network</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="networks-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='networks.js') }}"></script>
+{% endblock %}

@@ -2,7 +2,7 @@
 
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from web3 import Web3
 from datetime import datetime
@@ -14,24 +14,12 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///contracts.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key')
 db = SQLAlchemy(app)
 
-# Read the RPC URL from the environment variable
 RPC_URL = os.getenv("GETH_RPC_URL")
-w3 = None
 
-# Attempt to connect to the node on application startup
-if RPC_URL:
-    try:
-        w3 = Web3(Web3.HTTPProvider(RPC_URL))
-        if not w3.is_connected():
-            print(f"Warning: Could not connect to Geth node at {RPC_URL}")
-            w3 = None # Nullify the instance if the connection fails
-    except Exception as e:
-        print(f"Error connecting to Geth node: {e}")
-        w3 = None
-else:
-    print("Warning: GETH_RPC_URL environment variable not set.")
+# --- Models ---
 
 # Database model for storing contract ABIs
 class ContractABI(db.Model):
@@ -43,6 +31,34 @@ class ContractABI(db.Model):
     def __repr__(self):
         return f'<ContractABI {self.name}>'
 
+class Network(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    rpc_url = db.Column(db.String(255), unique=True, nullable=False)
+    is_default = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<Network {self.name}>'
+
+def get_active_network():
+    net_id = session.get('network_id')
+    network = None
+    if net_id:
+        network = Network.query.get(net_id)
+    if not network:
+        network = Network.query.filter_by(is_default=True).first()
+    return network
+
+def make_w3(rpc_url: str):
+    try:
+        instance = Web3(Web3.HTTPProvider(rpc_url))
+        if instance.is_connected():
+            return instance
+    except Exception:
+        pass
+    return None
+
 
 @app.context_processor
 def utility_processor():
@@ -53,19 +69,23 @@ def utility_processor():
     def to_datetime(timestamp):
         return datetime.fromtimestamp(timestamp)
 
+    active_network = get_active_network()
+    rpc_url = active_network.rpc_url if active_network else RPC_URL
+    w3_instance = make_w3(rpc_url) if rpc_url else None
+
     client_version = None
-    if w3:
+    if w3_instance:
         try:
-            client_version = w3.client_version
+            client_version = w3_instance.client_version
         except Exception:
             client_version = "Error fetching version"
 
-    # Inject the w3 instance and RPC URL into the template context
     return dict(
-        w3=w3, 
-        rpc_url=RPC_URL,
+        w3=w3_instance,
+        rpc_url=rpc_url,
         client_version=client_version,
-        from_wei=from_wei, 
+        active_network=active_network,
+        from_wei=from_wei,
         to_datetime=to_datetime
     )
 
@@ -75,7 +95,9 @@ def index():
     if request.method == 'POST' and 'search_query' in request.form:
         query = request.form['search_query'].strip()
         
-        if not w3:
+        active_network = get_active_network()
+        w3_instance = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
+        if not w3_instance:
             return redirect(url_for('index'))
 
         if Web3.is_address(query):
@@ -85,7 +107,7 @@ def index():
         elif len(query) == 66 and query.startswith('0x'):
             try:
                 # The only way to know if it's a block or transaction hash is by trying
-                w3.eth.get_transaction(query)
+                w3_instance.eth.get_transaction(query)
                 return redirect(url_for('transaction_details', tx_hash=query))
             except Exception:
                 return redirect(url_for('block_details', block_identifier=query))
@@ -93,12 +115,14 @@ def index():
         return render_template('error.html', message="Invalid or unrecognized search query.")
 
     latest_blocks = []
-    if w3:
+    active_network = get_active_network()
+    w3_instance = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
+    if w3_instance:
         try:
-            latest_block_number = w3.eth.block_number
+            latest_block_number = w3_instance.eth.block_number
             for i in range(10): # Show the last 10 blocks
                 if latest_block_number - i < 0: break
-                block = w3.eth.get_block(latest_block_number - i)
+                block = w3_instance.eth.get_block(latest_block_number - i)
                 latest_blocks.append(block)
         except Exception as e:
             # If the node disconnects while the app is running
@@ -111,6 +135,8 @@ def index():
 
 @app.route('/block/<block_identifier>')
 def block_details(block_identifier):
+    active_network = get_active_network()
+    w3 = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
     if not w3: return redirect(url_for('index'))
     try:
         if block_identifier.isdigit(): block_identifier = int(block_identifier)
@@ -122,6 +148,8 @@ def block_details(block_identifier):
 
 @app.route('/tx/<tx_hash>')
 def transaction_details(tx_hash):
+    active_network = get_active_network()
+    w3 = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
     if not w3: return redirect(url_for('index'))
     try:
         tx = w3.eth.get_transaction(tx_hash)
@@ -274,8 +302,12 @@ def contract_interaction_page(contract_id):
         if item.get('type') in ['event', 'error']:
             signature_text = f"{item['name']}({','.join([inp['type'] for inp in item.get('inputs', [])])})"
             # Correctly take the first 4 bytes (8 hex characters) and add the '0x' prefix.
-            item['signature'] = '0x' + w3.keccak(text=signature_text).hex()[:8]
+            item['signature'] = '0x' + Web3.keccak(text=signature_text).hex()[:8]
     return render_template('contract_interaction.html', contract=contract_data, abi=abi)
+
+@app.route('/networks', methods=['GET'])
+def networks_page():
+    return render_template('networks.html')
 
 @app.route('/api/contracts', methods=['POST'])
 def add_contract():
@@ -395,6 +427,8 @@ def clear_all_contracts():
 
 @app.route('/api/interact', methods=['POST'])
 def handle_interaction():
+    active_network = get_active_network()
+    w3 = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
     if not w3:
         return jsonify({'error': 'Not connected to a node'}), 503
 
@@ -483,6 +517,8 @@ def handle_interaction():
 
 @app.route('/address/<address>')
 def address_details(address):
+    active_network = get_active_network()
+    w3 = make_w3(active_network.rpc_url) if active_network else make_w3(RPC_URL)
     if not w3: return redirect(url_for('index'))
     try:
         balance = w3.eth.get_balance(address)
@@ -493,6 +529,105 @@ def address_details(address):
 
 with app.app_context():
     db.create_all()
+    # Seed default network from env if no networks exist
+    if Network.query.count() == 0:
+        if RPC_URL:
+            try:
+                default_name = os.getenv('GETH_NETWORK_NAME', 'Default')
+                db.session.add(Network(name=default_name, rpc_url=RPC_URL, is_default=True))
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Could not seed default network: {e}")
+        else:
+            print("Warning: No networks configured and GETH_RPC_URL not set.")
+
+# --- Network Management API ---
+@app.route('/api/networks', methods=['GET'])
+def list_networks():
+    nets = Network.query.order_by(Network.created_at.asc()).all()
+    return jsonify([
+        {
+            'id': n.id,
+            'name': n.name,
+            'rpc_url': n.rpc_url,
+            'is_default': n.is_default
+        } for n in nets
+    ])
+
+@app.route('/api/networks', methods=['POST'])
+def create_network():
+    data = request.get_json() or {}
+    name = data.get('name')
+    rpc_url = data.get('rpc_url')
+    is_default = bool(data.get('is_default', False))
+    if not name or not rpc_url:
+        return jsonify({'error': 'name and rpc_url are required'}), 400
+    if Network.query.filter((Network.name == name) | (Network.rpc_url == rpc_url)).first():
+        return jsonify({'error': 'Network with same name or rpc_url already exists'}), 409
+    try:
+        if is_default:
+            Network.query.update({Network.is_default: False})
+        net = Network(name=name, rpc_url=rpc_url, is_default=is_default)
+        db.session.add(net)
+        db.session.commit()
+        return jsonify({'id': net.id, 'name': net.name, 'rpc_url': net.rpc_url, 'is_default': net.is_default}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/networks/<int:net_id>', methods=['GET'])
+def get_network(net_id):
+    net = Network.query.get_or_404(net_id)
+    return jsonify({'id': net.id, 'name': net.name, 'rpc_url': net.rpc_url, 'is_default': net.is_default})
+
+@app.route('/api/networks/<int:net_id>', methods=['PUT'])
+def update_network(net_id):
+    net = Network.query.get_or_404(net_id)
+    data = request.get_json() or {}
+    name = data.get('name', net.name)
+    rpc_url = data.get('rpc_url', net.rpc_url)
+    is_default = data.get('is_default', net.is_default)
+    conflict = Network.query.filter(((Network.name == name) | (Network.rpc_url == rpc_url)) & (Network.id != net_id)).first()
+    if conflict:
+        return jsonify({'error': 'Another network with same name or rpc_url exists'}), 409
+    try:
+        net.name = name
+        net.rpc_url = rpc_url
+        net.is_default = bool(is_default)
+        if net.is_default:
+            Network.query.filter(Network.id != net.id).update({Network.is_default: False})
+        db.session.commit()
+        return jsonify({'id': net.id, 'name': net.name, 'rpc_url': net.rpc_url, 'is_default': net.is_default})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/networks/<int:net_id>', methods=['DELETE'])
+def delete_network(net_id):
+    net = Network.query.get_or_404(net_id)
+    try:
+        was_default = net.is_default
+        db.session.delete(net)
+        db.session.commit()
+        if was_default:
+            fallback = Network.query.first()
+            if fallback:
+                fallback.is_default = True
+                db.session.commit()
+                session['network_id'] = fallback.id
+            else:
+                session.pop('network_id', None)
+        return jsonify({'message': 'Network deleted'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/networks/<int:net_id>/activate', methods=['POST'])
+def activate_network(net_id):
+    net = Network.query.get_or_404(net_id)
+    session['network_id'] = net.id
+    return jsonify({'message': 'Network activated', 'active_network_id': net.id})
 
 if __name__ == '__main__':
     # The host '0.0.0.0' makes it accessible from other devices on your network
