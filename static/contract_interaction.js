@@ -90,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const res = data.result;
-                    const isTxHash = (typeof res === 'string') && /^0x[0-9a-fA-F]{64}$/.test(res);
+                    const isTxHash = (typeof res === 'string') && /^[0-9a-fA-F]{64}$/.test(res);
                     if (isTxHash) {
-                        resultDiv.innerHTML = `Result: <a href="/tx/${res}">${res}</a>`;
+                        resultDiv.innerHTML = `Result: <a target="_blank" href="/tx/${res}">${res}</a>`;
                     } else {
                         const display = (typeof res === 'object') ? JSON.stringify(res) : String(res);
                         resultDiv.textContent = `Result: ${display}`;
