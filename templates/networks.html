@@ -31,5 +31,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='networks.js') }}"></script>
+<script src="{{ url_for('static', filename='networks.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

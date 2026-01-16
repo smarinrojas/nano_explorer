@@ -99,7 +99,8 @@ h2 {
     display: flex;
     width: 100%;
 }
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
     flex-grow: 1;
     padding: 10px;
     background-color: var(--background);
@@ -109,7 +110,8 @@ input[type="text"] {
     font-size: 1rem;
     margin-right: -1px; /* Border overlap */
 }
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="number"]:focus {
     outline: 2px solid var(--foreground);
     z-index: 1;
 }

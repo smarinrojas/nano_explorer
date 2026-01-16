@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from web3 import Web3
 from datetime import datetime
 from dotenv import load_dotenv
+from anvil_manager import anvil_manager
 
 # Load environment variables from .env file
 load_dotenv()
@@ -542,6 +543,14 @@ with app.app_context():
         else:
             print("Warning: No networks configured and GETH_RPC_URL not set.")
 
+@app.route('/anvil', methods=['GET'])
+def anvil_page():
+    return render_template('anvil.html')
+
+@app.route('/api/anvil/logs', methods=['GET'])
+def anvil_logs():
+    return jsonify({'logs': anvil_manager.get_logs()})
+
 # --- Network Management API ---
 @app.route('/api/networks', methods=['GET'])
 def list_networks():
@@ -628,6 +637,56 @@ def activate_network(net_id):
     net = Network.query.get_or_404(net_id)
     session['network_id'] = net.id
     return jsonify({'message': 'Network activated', 'active_network_id': net.id})
+
+# --- Anvil Integration ---
+
+@app.route('/api/anvil/status', methods=['GET'])
+def anvil_status():
+    return jsonify(anvil_manager.get_status())
+
+@app.route('/api/anvil/start', methods=['POST'])
+def start_anvil():
+    data = request.get_json() or {}
+    fork_url = data.get('fork_url')
+    chain_id = data.get('chain_id')
+    
+    if not fork_url:
+        return jsonify({'error': 'fork_url is required'}), 400
+
+    success, message = anvil_manager.start_fork(fork_url, chain_id)
+    
+    if success:
+        # Automatically register or update the Local Anvil network
+        local_rpc = f"http://127.0.0.1:{anvil_manager.port}"
+        try:
+            anvil_net = Network.query.filter_by(rpc_url=local_rpc).first()
+            if not anvil_net:
+                anvil_net = Network(name="Local Anvil Fork", rpc_url=local_rpc, is_default=False)
+                db.session.add(anvil_net)
+            else:
+                anvil_net.name = f"Local Anvil Fork (Chain {chain_id})" if chain_id else "Local Anvil Fork"
+            
+            db.session.commit()
+            
+            # Optionally set as active session network
+            session['network_id'] = anvil_net.id
+            session.modified = True # Ensure session is saved
+            
+            return jsonify({
+                'message': 'Anvil started successfully',
+                'network_id': anvil_net.id,
+                'rpc_url': local_rpc
+            })
+        except Exception as e:
+            return jsonify({'message': 'Anvil started but DB update failed', 'error': str(e)}), 200
+    else:
+        return jsonify({'error': message}), 500
+
+@app.route('/api/anvil/stop', methods=['POST'])
+def stop_anvil():
+    if anvil_manager.stop():
+        return jsonify({'message': 'Anvil stopped successfully'})
+    return jsonify({'error': 'Anvil was not running or could not be stopped'}), 400
 
 if __name__ == '__main__':
     # The host '0.0.0.0' makes it accessible from other devices on your network

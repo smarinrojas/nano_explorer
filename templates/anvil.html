@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Anvil Manager - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Anvil Local Fork</h2>
+  <p>Manage your local Foundry Anvil instance. Output logs are shown below.</p>
+  
+  <div id="anvil-status-display" style="padding: 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 1rem; display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <strong>Status:</strong> <span id="anvil-state">Stopped</span>
+            <span id="anvil-details"></span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="btn-save-local" style="background-color: #2e7d32; display: none;">Save Local RPC</button>
+            <button id="btn-save-upstream" style="background-color: #1976d2; display: none;">Save Source Preset</button>
+            <button id="btn-add-metamask" style="background-color: #f6851b; display: none;">Add to MetaMask</button>
+            <button id="btn-stop-anvil" style="background-color: #d32f2f;">Stop Fork</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="anvil-control-panel" class="form-section">
+    <form id="anvil-form">
+      <div class="form-group">
+        <label for="fork-url">Fork URL (RPC)</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="fork-url" placeholder="https://eth-mainnet.alchemyapi.io/v2/..." required style="flex-grow: 1;">
+            <select id="network-select" style="width: 150px; padding: 10px; border: 1px solid var(--border-color); background: var(--background);">
+                <option value="">Load from...</option>
+                <!-- Populated by JS -->
+            </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="chain-id">Chain ID (Optional)</label>
+        <input type="number" id="chain-id" placeholder="e.g. 1" value="">
+      </div>
+      <div class="form-group">
+         <label><input type="checkbox" id="save-network"> Save Source URL as Network Preset</label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" style="background-color: #f57c00;">Start Anvil Fork</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+    <h2>Terminal Output</h2>
+    <div id="terminal-output" style="
+        background-color: #1e1e1e; 
+        color: #f0f0f0; 
+        font-family: 'Courier New', Courier, monospace; 
+        padding: 15px; 
+        height: 400px; 
+        overflow-y: auto; 
+        border-radius: 4px; 
+        white-space: pre-wrap;
+        font-size: 0.9rem;
+    ">
+        <span style="color: #666;">Waiting for logs...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='anvil.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

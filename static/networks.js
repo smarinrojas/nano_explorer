@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadNetworks() {
     list.innerHTML = '<p>Loading...</p>';
     try {
-      const res = await fetch('/api/networks');
+      const res = await fetch('/api/networks?t=' + new Date().getTime());
       const nets = await res.json();
       if (!Array.isArray(nets) || nets.length === 0) {
         list.innerHTML = '<p>No networks configured.</p>';
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nets.forEach(renderNetwork);
     } catch (e) {
       list.innerHTML = '<p>Error loading networks.</p>';
+      console.error(e);
     }
   }
 
@@ -119,7 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       form.reset();
       await loadNetworks();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
   });
 
   loadNetworks();
